@@ -2,7 +2,7 @@
 
 ## Team Information
 - **Team Name**: unknown
-- **Year**: 2026
+- **Year**: 2nd year
 - **All-Female Team**: No
 
 ## Architecture Overview
