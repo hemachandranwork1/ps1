@@ -1,0 +1,8 @@
+librosa
+numpy
+scipy
+fastapi
+uvicorn
+python-multipart
+aiofiles
+tqdm
