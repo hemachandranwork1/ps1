@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AudioID System</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0e1a;color:#e6edf3;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1f35,#0d1117);padding:24px 40px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:16px}
+.header h1{font-size:26px;color:#58a6ff}
+.header p{color:#8b949e;font-size:13px;margin-top:3px}
+.dot{width:10px;height:10px;border-radius:50%;background:#3fb950;box-shadow:0 0 8px #3fb950;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.container{max-width:1300px;margin:0 auto;padding:24px 20px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:22px}
+.card h2{font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.stat-num{font-size:38px;font-weight:bold;color:#58a6ff}
+.stat-label{color:#8b949e;font-size:12px;margin-top:3px}
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:#0d1117;padding:4px;border-radius:8px;border:1px solid #21262d}
+.tab{flex:1;padding:10px;text-align:center;cursor:pointer;border-radius:6px;font-size:14px;color:#8b949e;transition:all .2s}
+.tab.active{background:#1f6feb;color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.upload-area{border:2px dashed #30363d;border-radius:10px;padding:36px;text-align:center;cursor:pointer;transition:all .3s;position:relative}
+.upload-area:hover,.upload-area.over{border-color:#58a6ff;background:#1c2333}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:44px;margin-bottom:10px}
+.upload-area p{color:#8b949e;font-size:14px}
+.fname{color:#58a6ff;margin-top:8px;font-weight:bold;font-size:14px}
+.btn{background:#238636;color:#fff;border:none;padding:13px 28px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:bold;width:100%;margin-top:14px;transition:all .2s}
+.btn:hover{background:#2ea043;transform:translateY(-1px)}
+.btn:disabled{background:#21262d;color:#8b949e;cursor:not-allowed;transform:none}
+.btn-secondary{background:#21262d;margin-top:8px}
+.btn-secondary:hover{background:#30363d}
+.result{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:20px;margin-top:18px;display:none}
+.result.show{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.match-found{border-left:4px solid #3fb950}
+.no-match{border-left:4px solid #f85149}
+.ring-wrap{width:110px;height:110px;margin:0 auto 14px;position:relative}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;font-weight:bold}
+.song-name{font-size:26px;font-weight:bold;color:#58a6ff;text-align:center;margin:6px 0}
+.song-sub{text-align:center;color:#8b949e;font-size:13px;margin-bottom:12px}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold}
+.bg{background:#1f2d3d;color:#58a6ff;border:1px solid #1f6feb}
+.ba{background:#2d1a2d;color:#bc8cff;border:1px solid #6e40c9}
+.bl{background:#1a2d1a;color:#3fb950;border:1px solid #238636}
+.top3{margin-top:14px}
+.top3 h3{font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.top3-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#161b22;border-radius:6px;margin-bottom:6px}
+.top3-rank{width:24px;height:24px;border-radius:50%;background:#21262d;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:#8b949e}
+.top3-rank.gold{background:#d29922;color:#fff}
+.top3-info{flex:1}
+.top3-title{font-size:14px;color:#e6edf3}
+.top3-meta{font-size:11px;color:#8b949e}
+.top3-conf{font-size:13px;font-weight:bold}
+canvas{width:100%;border-radius:8px;background:#0d1117;display:block}
+.genre-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.gname{width:80px;font-size:13px;color:#8b949e;text-transform:capitalize}
+.gtrack{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden}
+.gfill{height:100%;border-radius:4px;background:linear-gradient(90deg,#1f6feb,#58a6ff);transition:width 1s ease}
+.gcount{width:28px;font-size:12px;color:#58b4ff;text-align:right}
+.hist-item{padding:10px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center}
+.hist-item:last-child{border-bottom:none}
+.hist-song{font-size:13px;color:#e6edf3}
+.hist-meta{font-size:11px;color:#8b949e}
+.ch{color:#3fb950}
+.cl{color:#f85149}
+.spinner{width:36px;height:36px;border:3px solid #21262d;border-top-color:#58a6ff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:none;text-align:center;padding:20px}
+.loading.show{display:block}
+.rec-btn{background:#c93b3b;padding:14px;border-radius:8px;border:none;color:#fff;font-size:15px;font-weight:bold;width:100%;cursor:pointer;margin-top:10px;transition:all .2s}
+.rec-btn:hover{background:#e03e3e}
+.rec-btn.recording{background:#f85149;animation:recpulse 1s infinite}
+@keyframes recpulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.4)}50%{box-shadow:0 0 0 10px rgba(248,81,73,0)}}
+.rec-status{text-align:center;color:#8b949e;font-size:13px;margin-top:8px;min-height:20px}
+.batch-results{margin-top:14px}
+.batch-item{padding:12px;background:#0d1117;border-radius:8px;margin-bottom:8px;border-left:3px solid #21262d}
+.batch-item.found{border-left-color:#3fb950}
+.batch-item.notfound{border-left-color:#f85149}
+.sysinfo{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sinfo{text-align:center;padding:12px;background:#0d1117;border-radius:8px}
+.sival{font-size:17px;font-weight:bold;color:#58a6ff}
+.sikey{font-size:11px;color:#8b949e;margin-top:3px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="dot" id="dot"></div>
+  <div>
+    <h1>🎵 AudioID — Audio Identification System</h1>
+    <p id="hstatus">Connecting...</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="grid3">
+    <div class="card">
+      <h2>Songs Indexed</h2>
+      <div class="stat-num" id="sSongs">—</div>
+      <div class="stat-label">copyright-free tracks</div>
+    </div>
+    <div class="card">
+      <h2>Fingerprints</h2>
+      <div class="stat-num" id="sFP">—</div>
+      <div class="stat-label">hash entries in DB</div>
+    </div>
+    <div class="card">
+      <h2>Avg Latency</h2>
+      <div class="stat-num" id="sLat">—</div>
+      <div class="stat-label">ms per query</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('upload')">📁 Upload File</div>
+    <div class="tab" onclick="switchTab('mic')">🎙️ Record Live</div>
+    <div class="tab" onclick="switchTab('batch')">📦 Batch Identify</div>
+    <div class="tab" onclick="switchTab('browse')">🎵 Browse Songs</div>
+  </div>
+
+  <!-- UPLOAD TAB -->
+  <div class="tab-content active" id="tab-upload">
+    <div class="grid2">
+      <div class="card">
+        <h2>Upload Audio Clip</h2>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="audioFile" accept=".wav,.mp3,.ogg,.m4a" onchange="fileSelected(this)">
+          <div class="upload-icon">🎙️</div>
+          <p>Drop audio file here or click to browse</p>
+          <p style="font-size:12px;color:#8b949e;margin-top:6px">WAV · MP3 · OGG · M4A</p>
+          <div class="fname" id="selFile"></div>
+        </div>
+        <button class="btn" id="idBtn" onclick="identifyFile()" disabled>🔍 Identify Song</button>
+
+        <div class="loading" id="loading1">
+          <div class="spinner"></div>
+          <p style="color:#8b949e;font-size:13px">Extracting fingerprints and matching...</p>
+        </div>
+
+        <div class="result" id="result1">
+          <div class="ring-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#21262d" stroke-width="9"/>
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#3fb950" stroke-width="9"
+                stroke-dasharray="289" id="ring1" stroke-dashoffset="289" stroke-linecap="round"
+                style="transition:stroke-dashoffset .8s ease,stroke .3s"/>
+            </svg>
+            <div class="ring-text" id="ringText1">0%</div>
+          </div>
+          <div class="song-name" id="songName1">—</div>
+          <div class="song-sub" id="songSub1">—</div>
+          <div class="badges" id="badges1"></div>
+          <div style="margin-top:12px">
+            <div style="font-size:11px;color:#8b949e;margin-bottom:4px">SPECTROGRAM PEAKS</div>
+            <canvas id="peakCanvas1" height="70"></canvas>
+          </div>
+          <div class="top3" id="top3_1"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Genre Distribution</h2>
+        <div id="genreBars"><p style="color:#8b949e">Loading...</p></div>
+        <br>
+        <h2>Query History</h2>
+        <div id="history" style="max-height:220px;overflow-y:auto">
+          <p style="color:#8b949e;font-size:13px">No queries yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIC TAB -->
+  <div class="tab-content" id="tab-mic">
+    <div class="grid2">
+      <div class="card">
+        <h2>Record from Microphone</h2>
+        <p style="color:#8b949e;font-size:13px;margin-bottom:16px">Record 5-10 seconds of audio and identify it live. Works with noisy environments.</p>
+        <canvas id="micCanvas" height="80" style="margin-bottom:12px"></canvas>
+        <button class="rec-btn" id="recBtn" onclick="toggleRecord()">🎙️ Start Recording</button>
+        <div class="rec-status" id="recStatus">Click to start recording</div>
+
+        <div class="loading" id="loading2">
+          <div class="spinner"></div>
+          <p style="color:#8b949e;font-size:13px">Identifying recorded audio...</p>
+        </div>
+
+        <div class="result" id="result2">
+          <div class="ring-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#21262d" stroke-width="9"/>
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#3fb950" stroke-width="9"
+                stroke-dasharray="289" id="ring2" stroke-dashoffset="289" stroke-linecap="round"
+                style="transition:stroke-dashoffset .8s ease,stroke .3s"/>
+            </svg>
+            <div class="ring-text" id="ringText2">0%</div>
+          </div>
+          <div class="song-name" id="songName2">—</div>
+          <div class="song-sub" id="songSub2">—</div>
+          <div class="badges" id="badges2"></div>
+          <div class="top3" id="top3_2"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>How It Works</h2>
+        <div class="sysinfo" style="margin-bottom:16px">
+          <div class="sinfo"><div class="sival">STFT</div><div class="sikey">Spectrogram</div></div>
+          <div class="sinfo"><div class="sival">SHA1</div><div class="sikey">Hashing</div></div>
+          <div class="sinfo"><div class="sival">O(1)</div><div class="sikey">Lookup</div></div>
+          <div class="sinfo"><div class="sival">SQLite</div><div class="sikey">Storage</div></div>
+        </div>
+        <p style="color:#8b949e;font-size:13px;line-height:1.8">
+          1. Audio → Short-Time Fourier Transform → Spectrogram<br>
+          2. Extract dominant frequency peaks (constellation map)<br>
+          3. Pair peaks → generate SHA1 hashes with time deltas<br>
+          4. Lookup hashes in SQLite index (900k+ entries)<br>
+          5. Time-offset alignment voting → best match wins<br>
+          6. Confidence = matched hashes ÷ total query hashes
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BATCH TAB -->
+  <div class="tab-content" id="tab-batch">
+    <div class="card">
+      <h2>Batch Identify Multiple Files</h2>
+      <p style="color:#8b949e;font-size:13px;margin-bottom:14px">Upload multiple audio files at once and identify all of them.</p>
+      <div class="upload-area" style="position:relative">
+        <input type="file" id="batchFiles" accept=".wav,.mp3,.ogg,.m4a" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+        <div class="upload-icon">📦</div>
+        <p>Drop multiple audio files here</p>
+        <div class="fname" id="batchCount"></div>
+      </div>
+      <button class="btn" id="batchBtn" onclick="runBatch()">🔍 Identify All</button>
+      <div class="loading" id="loading3">
+        <div class="spinner"></div>
+        <p style="color:#8b949e;font-size:13px">Processing batch...</p>
+      </div>
+      <div class="batch-results" id="batchResults"></div>
+    </div>
+  </div>
+
+  <!-- BROWSE TAB -->
+  <div class="tab-content" id="tab-browse">
+    <div class="card">
+      <h2>Browse Indexed Songs</h2>
+      <input type="text" id="searchBox" placeholder="Search by title or genre..." oninput="filterSongs()"
+        style="width:100%;padding:10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:14px;margin-bottom:14px">
+      <div id="songList" style="max-height:500px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let latencies = [];
+let history = [];
+let allSongs = [];
+let mediaRecorder, audioChunks = [], recStream, animFrame, analyser;
+let isRecording = false;
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['upload','mic','batch','browse'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'browse' && allSongs.length === 0) loadSongs();
+}
+
+async function loadStats() {
+  try {
+    const h = await (await fetch(`${API}/health`)).json();
+    document.getElementById('sSongs').textContent = h.songs_indexed.toLocaleString();
+    document.getElementById('sFP').textContent = (h.fingerprints/1000).toFixed(0)+'k';
+    document.getElementById('hstatus').textContent = `Online · ${h.songs_indexed} songs · ${h.fingerprints.toLocaleString()} fingerprints`;
+    document.getElementById('dot').style.background = '#3fb950';
+    const s = await (await fetch(`${API}/stats`)).json();
+    const max = Math.max(...Object.values(s.genres));
+    document.getElementById('genreBars').innerHTML = Object.entries(s.genres)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([g,n]) => `<div class="genre-bar">
+        <div class="gname">${g}</div>
+        <div class="gtrack"><div class="gfill" style="width:${(n/max*100).toFixed(0)}%"></div></div>
+        <div class="gcount">${n}</div></div>`).join('');
+  } catch(e) {
+    document.getElementById('hstatus').textContent = 'API offline';
+    document.getElementById('dot').style.background = '#f85149';
+  }
+}
+
+function fileSelected(input) {
+  const f = input.files[0];
+  if (f) { document.getElementById('selFile').textContent = f.name; document.getElementById('idBtn').disabled = false; }
+}
+
+document.getElementById('batchFiles').addEventListener('change', function() {
+  document.getElementById('batchCount').textContent = `${this.files.length} files selected`;
+});
+
+const ua = document.getElementById('uploadArea');
+ua.addEventListener('dragover', e => { e.preventDefault(); ua.classList.add('over'); });
+ua.addEventListener('dragleave', () => ua.classList.remove('over'));
+ua.addEventListener('drop', e => {
+  e.preventDefault(); ua.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) { document.getElementById('selFile').textContent = f.name; document.getElementById('idBtn').disabled = false; }
+  document.getElementById('audioFile').files = e.dataTransfer.files;
+});
+
+async function identifyFile() {
+  const file = document.getElementById('audioFile').files[0];
+  if (!file) return;
+  document.getElementById('loading1').classList.add('show');
+  document.getElementById('result1').classList.remove('show');
+  document.getElementById('idBtn').disabled = true;
+  const form = new FormData(); form.append('file', file);
+  try {
+    const d = await (await fetch(`${API}/identify`, {method:'POST',body:form})).json();
+    showResult(d, '1');
+    trackLatency(d.latency_ms);
+    addHistory(d);
+  } catch(e) { alert('Error: '+e.message); }
+  document.getElementById('loading1').classList.remove('show');
+  document.getElementById('idBtn').disabled = false;
+}
+
+function showResult(d, suffix) {
+  const card = document.getElementById('result'+suffix);
+  card.className = 'result show ' + (d.status==='match_found' ? 'match-found' : 'no-match');
+  const m = d.match;
+  const pct = m ? Math.round(m.confidence*100) : 0;
+  const ring = document.getElementById('ring'+suffix);
+  const offset = 289 - (289*pct/100);
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = pct>70?'#3fb950':pct>40?'#d29922':'#f85149';
+  const rt = document.getElementById('ringText'+suffix);
+  rt.textContent = pct+'%';
+  rt.style.color = pct>70?'#3fb950':pct>40?'#d29922':'#f85149';
+  document.getElementById('songName'+suffix).textContent = m ? m.title : 'No Match';
+  document.getElementById('songSub'+suffix).textContent = m ? `${m.duration.toFixed(1)}s` : 'Audio not in database';
+  document.getElementById('badges'+suffix).innerHTML = m ? `
+    <span class="badge ba">👤 ${m.artist}</span>
+    <span class="badge bg">🎸 ${m.genre}</span>
+    <span class="badge bl">⚡ ${d.latency_ms}ms</span>` : `<span class="badge bl">⚡ ${d.latency_ms}ms</span>`;
+  if (d.peaks && suffix==='1') drawPeaks(d.peaks, 'peakCanvas1');
+  if (d.top3 && d.top3.length > 0) {
+    document.getElementById('top3_'+suffix).innerHTML = `
+      <div class="top3"><h3>Top Candidates</h3>` +
+      d.top3.map((s,i) => `<div class="top3-item">
+        <div class="top3-rank ${i===0?'gold':''}">${i+1}</div>
+        <div class="top3-info">
+          <div class="top3-title">${s.title}</div>
+          <div class="top3-meta">${s.genre} · ${s.artist}</div>
+        </div>
+        <div class="top3-conf" style="color:${s.confidence>0.5?'#3fb950':s.confidence>0.2?'#d29922':'#f85149'}">${(s.confidence*100).toFixed(1)}%</div>
+      </div>`).join('') + '</div>';
+  }
+}
+
+function drawPeaks(peaks, canvasId) {
+  const canvas = document.getElementById(canvasId);
+  canvas.width = canvas.offsetWidth; canvas.height = 70;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,canvas.width,70);
+  const maxT = Math.max(...peaks.map(p=>p[1]))||1;
+  const maxF = Math.max(...peaks.map(p=>p[0]))||1;
+  peaks.forEach(([f,t]) => {
+    const x = (t/maxT)*canvas.width;
+    const y = 70-(f/maxF)*70;
+    ctx.fillStyle = '#58a6ff';
+    ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill();
+  });
+}
+
+function trackLatency(ms) {
+  latencies.push(ms);
+  const avg = (latencies.reduce((a,b)=>a+b,0)/latencies.length).toFixed(0);
+  document.getElementById('sLat').textContent = avg+'ms';
+}
+
+function addHistory(d) {
+  const m = d.match;
+  history.unshift({song: m?m.title:'No match', conf: m?Math.round(m.confidence*100):0, genre: m?m.genre:'—', time: new Date().toLocaleTimeString()});
+  if (history.length>10) history.pop();
+  document.getElementById('history').innerHTML = history.map(h => `
+    <div class="hist-item">
+      <div><div class="hist-song">${h.song}</div><div class="hist-meta">${h.genre} · ${h.time}</div></div>
+      <div class="${h.conf>40?'ch':'cl'}">${h.conf}%</div>
+    </div>`).join('');
+}
+
+// MICROPHONE
+async function toggleRecord() {
+  if (!isRecording) {
+    try {
+      recStream = await navigator.mediaDevices.getUserMedia({audio:true});
+      analyser = new (window.AudioContext||window.webkitAudioContext)().createAnalyser();
+      const src = analyser._context ? analyser._context.createMediaStreamSource(recStream) : new AudioContext().createMediaStreamSource(recStream);
+      analyser.fftSize = 256;
+      drawMicWave();
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(recStream);
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = sendRecording;
+      mediaRecorder.start();
+      isRecording = true;
+      document.getElementById('recBtn').textContent = '⏹️ Stop & Identify';
+      document.getElementById('recBtn').classList.add('recording');
+      document.getElementById('recStatus').textContent = 'Recording... speak, hum, or play audio near mic';
+    } catch(e) { alert('Microphone access denied: '+e.message); }
+  } else {
+    mediaRecorder.stop();
+    recStream.getTracks().forEach(t=>t.stop());
+    cancelAnimationFrame(animFrame);
+    isRecording = false;
+    document.getElementById('recBtn').textContent = '🎙️ Start Recording';
+    document.getElementById('recBtn').classList.remove('recording');
+    document.getElementById('recStatus').textContent = 'Processing...';
+  }
+}
+
+function drawMicWave() {
+  const canvas = document.getElementById('micCanvas');
+  canvas.width = canvas.offsetWidth; canvas.height = 80;
+  const ctx = canvas.getContext('2d');
+  function draw() {
+    animFrame = requestAnimationFrame(draw);
+    ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,canvas.width,80);
+    ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let i=0;i<canvas.width;i++) {
+      const y = 40 + Math.sin(Date.now()/200+i/20)*15*(isRecording?1:0.2);
+      i===0?ctx.moveTo(i,y):ctx.lineTo(i,y);
+    }
+    ctx.stroke();
+  }
+  draw();
+}
+
+async function sendRecording() {
+  document.getElementById('loading2').classList.add('show');
+  document.getElementById('result2').classList.remove('show');
+  const blob = new Blob(audioChunks, {type:'audio/webm'});
+  const form = new FormData(); form.append('file', blob, 'recording.webm');
+  try {
+    const d = await (await fetch(`${API}/identify`, {method:'POST',body:form})).json();
+    showResult(d, '2');
+    trackLatency(d.latency_ms);
+    addHistory(d);
+    document.getElementById('recStatus').textContent = 'Done! Record again to try another.';
+  } catch(e) { document.getElementById('recStatus').textContent = 'Error: '+e.message; }
+  document.getElementById('loading2').classList.remove('show');
+}
+
+// BATCH
+async function runBatch() {
+  const files = document.getElementById('batchFiles').files;
+  if (!files.length) return;
+  document.getElementById('loading3').classList.add('show');
+  document.getElementById('batchResults').innerHTML = '';
+  const form = new FormData();
+  for (const f of files) form.append('files', f);
+  try {
+    const d = await (await fetch(`${API}/identify/batch`, {method:'POST',body:form})).json();
+    document.getElementById('batchResults').innerHTML = d.results.map(r => {
+      const m = r.match;
+      return `<div class="batch-item ${m?'found':'notfound'}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:14px;color:#e6edf3">${m?m.title:'No Match'}</div>
+            <div style="font-size:11px;color:#8b949e">${r.filename} ${m?'· '+m.genre:''}</div>
+          </div>
+          <div style="font-size:13px;font-weight:bold;color:${m&&m.confidence>0.4?'#3fb950':'#f85149'}">${m?(m.confidence*100).toFixed(1)+'%':'—'}</div>
+        </div>
+        ${r.latency_ms?`<div style="font-size:11px;color:#8b949e;margin-top:4px">⚡ ${r.latency_ms}ms</div>`:''}
+      </div>`;
+    }).join('');
+  } catch(e) { alert('Batch error: '+e.message); }
+  document.getElementById('loading3').classList.remove('show');
+}
+
+// BROWSE
+async function loadSongs() {
+  try {
+    const d = await (await fetch(`${API}/songs`)).json();
+    allSongs = d.songs;
+    renderSongs(allSongs);
+  } catch(e) {}
+}
+
+function filterSongs() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  renderSongs(allSongs.filter(s => s.title.toLowerCase().includes(q) || s.genre.toLowerCase().includes(q)));
+}
+
+function renderSongs(songs) {
+  document.getElementById('songList').innerHTML = songs.slice(0,200).map(s => `
+    <div class="hist-item">
+      <div><div class="hist-song">${s.title}</div><div class="hist-meta">${s.genre} · ${s.artist} · ${s.duration.toFixed(1)}s</div></div>
+      <span class="badge bg">${s.genre}</span>
+    </div>`).join('');
+}
+
+loadStats();
+</script>
+</body>
+</html>
